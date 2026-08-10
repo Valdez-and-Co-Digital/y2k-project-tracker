@@ -1,0 +1,14 @@
+{
+  "auth": {
+    "authorizedDomains": [
+      "localhost",
+      "y2k-tracker-cdd71.firebaseapp.com"
+    ],
+    "providers": {
+      "googleSignIn": {
+        "oAuthBrandDisplayName": "Y2k Tracker",
+        "supportEmail": "morganmv145@gmail.com"
+      }
+    }
+  }
+}

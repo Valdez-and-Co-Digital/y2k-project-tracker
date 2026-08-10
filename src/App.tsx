@@ -68,6 +68,15 @@ export default function App() {
   // Search filter for logs table
   const [logSearch, setLogSearch] = useState('');
 
+  const handleSelectProject = (project: Project | null) => {
+    setActiveProject(project);
+    if (project) {
+      localStorage.setItem('activeProjectId', project.id);
+    } else {
+      localStorage.removeItem('activeProjectId');
+    }
+  };
+
   // Fetch initial data
   const fetchData = async () => {
     try {
@@ -80,9 +89,13 @@ export default function App() {
       ]);
 
       setProjects(fProjects || []);
-      if (fProjects && fProjects.length > 0 && !activeProject) {
-        setActiveProject(fProjects[0]);
-      } else if (!fProjects || fProjects.length === 0) {
+      const storedProjectId = localStorage.getItem('activeProjectId');
+      if (fProjects && fProjects.length > 0) {
+        const projToSelect = storedProjectId 
+          ? fProjects.find(p => p.id === storedProjectId) || fProjects[0]
+          : fProjects[0];
+        setActiveProject(projToSelect);
+      } else {
         setActiveProject(null);
       }
       
@@ -110,10 +123,10 @@ export default function App() {
       const saved = await saveProjectToFirestore(projectData);
       if (projectData.id) {
         setProjects(projects.map(p => p.id === saved.id ? saved : p));
-        if (activeProject?.id === saved.id) setActiveProject(saved);
+        if (activeProject?.id === saved.id) handleSelectProject(saved);
       } else {
         setProjects([saved, ...projects]);
-        setActiveProject(saved);
+        handleSelectProject(saved);
       }
     } catch (err) {
       console.error('Firestore project save failed:', err);
@@ -130,7 +143,7 @@ export default function App() {
     }
     const newProjs = projects.filter(p => p.id !== id);
     setProjects(newProjs);
-    setActiveProject(newProjs[0] || null);
+    handleSelectProject(newProjs[0] || null);
     fetchData();
   };
 
@@ -138,7 +151,7 @@ export default function App() {
     try {
       await saveProjectToFirestore({ id: projectId, widgets });
       setProjects(projects.map(p => p.id === projectId ? { ...p, widgets } : p));
-      if (activeProject?.id === projectId) setActiveProject({ ...activeProject, widgets });
+      if (activeProject?.id === projectId) handleSelectProject({ ...activeProject, widgets });
     } catch (err) {
       console.error('Failed to update widgets:', err);
     }
@@ -258,7 +271,7 @@ export default function App() {
         <TopNav
           activeProject={activeProject}
           projects={projects}
-          onSelectProject={setActiveProject}
+          onSelectProject={handleSelectProject}
           onToggleMobileNav={() => setMobileNavOpen(true)}
           soundEnabled={soundEnabled}
           onToggleSound={() => {
@@ -382,7 +395,7 @@ export default function App() {
                       <div className="flex justify-between items-start mb-4">
                         <h3 className="font-headline-md text-headline-md font-bold uppercase">{project.name}</h3>
                         <button 
-                          onClick={() => setActiveProject(project)}
+                          onClick={() => handleSelectProject(project)}
                           className="bg-retro-teal text-on-surface font-label-pixel text-label-pixel uppercase border-3 border-on-surface rounded-xl py-2 px-4 shadow-hard hover:brightness-110 flex items-center gap-2 btn-press"
                         >
                           OPEN DASHBOARD

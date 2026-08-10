@@ -25,12 +25,19 @@ export async function getProjectsFromFirestore(): Promise<Project[]> {
   try {
     const user = auth.currentUser;
     if (!user) return [];
-    const q = query(collection(db, PROJECTS_COL), where('userId', '==', user.uid), orderBy('createdAt', 'desc'));
+    const q = query(collection(db, PROJECTS_COL), where('userId', '==', user.uid));
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(docSnap => ({
+    const projects = snapshot.docs.map(docSnap => ({
       id: docSnap.id,
       ...docSnap.data()
-    } as Project));
+    })) as Project[];
+    
+    // Sort in memory to avoid requiring a composite index in Firestore
+    return projects.sort((a, b) => {
+      const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+      const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+      return timeB - timeA;
+    });
   } catch (err) {
     console.warn('Firestore fetch projects failed, falling back:', err);
     return [];
@@ -82,12 +89,19 @@ export async function getLogsFromFirestore(): Promise<TimeLog[]> {
   try {
     const user = auth.currentUser;
     if (!user) return [];
-    const q = query(collection(db, LOGS_COL), where('userId', '==', user.uid), orderBy('createdAt', 'desc'));
+    const q = query(collection(db, LOGS_COL), where('userId', '==', user.uid));
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(docSnap => ({
+    const logs = snapshot.docs.map(docSnap => ({
       id: docSnap.id,
       ...docSnap.data()
-    } as TimeLog));
+    })) as TimeLog[];
+
+    // Sort in memory to avoid requiring a composite index in Firestore
+    return logs.sort((a, b) => {
+      const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+      const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+      return timeB - timeA;
+    });
   } catch (err) {
     console.warn('Firestore fetch logs failed:', err);
     return [];

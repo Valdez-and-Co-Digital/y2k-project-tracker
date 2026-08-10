@@ -15,6 +15,7 @@ export type WidgetType =
 
 export interface Project {
   id: string;
+  userId?: string;
   name: string;
   description: string; // Project scope description
   color: ProjectColor;
@@ -28,6 +29,7 @@ export interface Project {
 
 export interface TimeLog {
   id: string;
+  userId?: string;
   projectId: string;
   taskName: string;
   description: string;
@@ -40,6 +42,7 @@ export interface TimeLog {
 
 export interface TodoItem {
   id: string;
+  userId?: string;
   projectId: string;
   title: string;
   completed: boolean;
@@ -51,6 +54,7 @@ export interface TodoItem {
 
 export interface NoteItem {
   id: string;
+  userId?: string;
   projectId: string;
   title: string;
   content: string;

@@ -6,11 +6,12 @@ import {
   deleteDoc, 
   doc, 
   query, 
-  orderBy, 
+  orderBy,
+  where,
   setDoc,
   serverTimestamp 
 } from 'firebase/firestore';
-import { db, handleFirestoreError, OperationType } from './firebase';
+import { db, handleFirestoreError, OperationType, auth } from './firebase';
 import { Project, TimeLog, TodoItem, NoteItem } from '../types';
 
 // Collection references
@@ -22,7 +23,9 @@ const NOTES_COL = 'notes';
 // --- PROJECTS ---
 export async function getProjectsFromFirestore(): Promise<Project[]> {
   try {
-    const q = query(collection(db, PROJECTS_COL), orderBy('createdAt', 'desc'));
+    const user = auth.currentUser;
+    if (!user) return [];
+    const q = query(collection(db, PROJECTS_COL), where('userId', '==', user.uid), orderBy('createdAt', 'desc'));
     const snapshot = await getDocs(q);
     return snapshot.docs.map(docSnap => ({
       id: docSnap.id,
@@ -36,12 +39,16 @@ export async function getProjectsFromFirestore(): Promise<Project[]> {
 
 export async function saveProjectToFirestore(project: Partial<Project>): Promise<Project> {
   try {
+    const user = auth.currentUser;
+    if (!user) throw new Error("Must be logged in to save projects");
+
     if (project.id) {
       const docRef = doc(db, PROJECTS_COL, project.id);
       await updateDoc(docRef, { ...project, updatedAt: serverTimestamp() });
       return { id: project.id, ...project } as Project;
     } else {
       const newProj = {
+        userId: user.uid,
         name: project.name || 'New Project',
         description: project.description || '',
         color: project.color || 'purple',
@@ -73,7 +80,9 @@ export async function deleteProjectFromFirestore(id: string): Promise<void> {
 // --- TIME LOGS ---
 export async function getLogsFromFirestore(): Promise<TimeLog[]> {
   try {
-    const q = query(collection(db, LOGS_COL), orderBy('createdAt', 'desc'));
+    const user = auth.currentUser;
+    if (!user) return [];
+    const q = query(collection(db, LOGS_COL), where('userId', '==', user.uid), orderBy('createdAt', 'desc'));
     const snapshot = await getDocs(q);
     return snapshot.docs.map(docSnap => ({
       id: docSnap.id,
@@ -87,7 +96,11 @@ export async function getLogsFromFirestore(): Promise<TimeLog[]> {
 
 export async function saveLogToFirestore(logData: Partial<TimeLog>): Promise<TimeLog> {
   try {
+    const user = auth.currentUser;
+    if (!user) throw new Error("Must be logged in to save logs");
+
     const newLog = {
+      userId: user.uid,
       projectId: logData.projectId || '',
       taskName: logData.taskName || 'Working Session',
       description: logData.description || '',
@@ -117,7 +130,10 @@ export async function deleteLogFromFirestore(id: string): Promise<void> {
 // --- TO-DOS ---
 export async function getTodosFromFirestore(): Promise<TodoItem[]> {
   try {
-    const snapshot = await getDocs(collection(db, TODOS_COL));
+    const user = auth.currentUser;
+    if (!user) return [];
+    const q = query(collection(db, TODOS_COL), where('userId', '==', user.uid));
+    const snapshot = await getDocs(q);
     return snapshot.docs.map(docSnap => ({
       id: docSnap.id,
       ...docSnap.data()
@@ -130,12 +146,16 @@ export async function getTodosFromFirestore(): Promise<TodoItem[]> {
 
 export async function saveTodoToFirestore(todoData: Partial<TodoItem>): Promise<TodoItem> {
   try {
+    const user = auth.currentUser;
+    if (!user) throw new Error("Must be logged in to save todos");
+
     if (todoData.id) {
       const docRef = doc(db, TODOS_COL, todoData.id);
       await updateDoc(docRef, todoData);
       return todoData as TodoItem;
     } else {
       const newTodo = {
+        userId: user.uid,
         projectId: todoData.projectId || '',
         title: todoData.title || 'New Task',
         completed: false,
@@ -165,7 +185,10 @@ export async function deleteTodoFromFirestore(id: string): Promise<void> {
 // --- NOTES ---
 export async function getNotesFromFirestore(): Promise<NoteItem[]> {
   try {
-    const snapshot = await getDocs(collection(db, NOTES_COL));
+    const user = auth.currentUser;
+    if (!user) return [];
+    const q = query(collection(db, NOTES_COL), where('userId', '==', user.uid));
+    const snapshot = await getDocs(q);
     return snapshot.docs.map(docSnap => ({
       id: docSnap.id,
       ...docSnap.data()
@@ -178,12 +201,16 @@ export async function getNotesFromFirestore(): Promise<NoteItem[]> {
 
 export async function saveNoteToFirestore(noteData: Partial<NoteItem>): Promise<NoteItem> {
   try {
+    const user = auth.currentUser;
+    if (!user) throw new Error("Must be logged in to save notes");
+
     if (noteData.id) {
       const docRef = doc(db, NOTES_COL, noteData.id);
       await updateDoc(docRef, noteData);
       return noteData as NoteItem;
     } else {
       const newNote = {
+        userId: user.uid,
         projectId: noteData.projectId || '',
         title: noteData.title || 'New Note',
         content: noteData.content || '',

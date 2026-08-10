@@ -71,7 +71,7 @@ export default function App() {
   // Fetch initial data
   const fetchData = async () => {
     try {
-      // 1. Try Cloud Firestore first
+      // 1. Fetch directly from Cloud Firestore
       const [fProjects, fLogs, fTodos, fNotes] = await Promise.all([
         getProjectsFromFirestore(),
         getLogsFromFirestore(),
@@ -79,33 +79,16 @@ export default function App() {
         getNotesFromFirestore()
       ]);
 
-      if (fProjects && fProjects.length > 0) {
-        setProjects(fProjects);
-        if (!activeProject) setActiveProject(fProjects[0]);
-        if (fLogs) setLogs(fLogs);
-        if (fTodos) setTodos(fTodos);
-        if (fNotes) setNotes(fNotes);
-        return;
+      setProjects(fProjects || []);
+      if (fProjects && fProjects.length > 0 && !activeProject) {
+        setActiveProject(fProjects[0]);
+      } else if (!fProjects || fProjects.length === 0) {
+        setActiveProject(null);
       }
-
-      // 2. Fallback to API endpoint
-      const [pRes, lRes, tRes, nRes] = await Promise.all([
-        fetch('/api/projects'),
-        fetch('/api/logs'),
-        fetch('/api/todos'),
-        fetch('/api/notes')
-      ]);
-
-      if (pRes.ok) {
-        const pData = await pRes.json();
-        setProjects(pData);
-        if (pData.length > 0 && !activeProject) {
-          setActiveProject(pData[0]);
-        }
-      }
-      if (lRes.ok) setLogs(await lRes.json());
-      if (tRes.ok) setTodos(await tRes.json());
-      if (nRes.ok) setNotes(await nRes.json());
+      
+      setLogs(fLogs || []);
+      setTodos(fTodos || []);
+      setNotes(fNotes || []);
     } catch (err) {
       console.error('Failed to load initial data:', err);
     }
@@ -133,30 +116,7 @@ export default function App() {
         setActiveProject(saved);
       }
     } catch (err) {
-      console.warn('Firestore project save failed, attempting API:', err);
-      if (projectData.id) {
-        const res = await fetch(`/api/projects/${projectData.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(projectData)
-        });
-        if (res.ok) {
-          const updated = await res.json();
-          setProjects(projects.map(p => p.id === updated.id ? updated : p));
-          if (activeProject?.id === updated.id) setActiveProject(updated);
-        }
-      } else {
-        const res = await fetch('/api/projects', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(projectData)
-        });
-        if (res.ok) {
-          const created = await res.json();
-          setProjects([created, ...projects]);
-          setActiveProject(created);
-        }
-      }
+      console.error('Firestore project save failed:', err);
     }
   };
 
@@ -165,8 +125,8 @@ export default function App() {
     soundFx.playDelete();
     try {
       await deleteProjectFromFirestore(id);
-    } catch {
-      await fetch(`/api/projects/${id}`, { method: 'DELETE' });
+    } catch (err) {
+      console.error('Failed to delete project:', err);
     }
     const newProjs = projects.filter(p => p.id !== id);
     setProjects(newProjs);
@@ -179,17 +139,8 @@ export default function App() {
       await saveProjectToFirestore({ id: projectId, widgets });
       setProjects(projects.map(p => p.id === projectId ? { ...p, widgets } : p));
       if (activeProject?.id === projectId) setActiveProject({ ...activeProject, widgets });
-    } catch {
-      const res = await fetch(`/api/projects/${projectId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ widgets })
-      });
-      if (res.ok) {
-        const updated = await res.json();
-        setProjects(projects.map(p => p.id === updated.id ? updated : p));
-        if (activeProject?.id === updated.id) setActiveProject(updated);
-      }
+    } catch (err) {
+      console.error('Failed to update widgets:', err);
     }
   };
 
@@ -198,16 +149,8 @@ export default function App() {
     try {
       const newLog = await saveLogToFirestore(logData);
       setLogs([newLog, ...logs]);
-    } catch {
-      const res = await fetch('/api/logs', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(logData)
-      });
-      if (res.ok) {
-        const newLog = await res.json();
-        setLogs([newLog, ...logs]);
-      }
+    } catch (err) {
+      console.error('Failed to save log:', err);
     }
   };
 
@@ -215,8 +158,8 @@ export default function App() {
     soundFx.playDelete();
     try {
       await deleteLogFromFirestore(id);
-    } catch {
-      await fetch(`/api/logs/${id}`, { method: 'DELETE' });
+    } catch (err) {
+      console.error('Failed to delete log:', err);
     }
     setLogs(logs.filter(l => l.id !== id));
   };
@@ -226,16 +169,8 @@ export default function App() {
     try {
       const newTodo = await saveTodoToFirestore(todoData);
       setTodos([newTodo, ...todos]);
-    } catch {
-      const res = await fetch('/api/todos', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(todoData)
-      });
-      if (res.ok) {
-        const newTodo = await res.json();
-        setTodos([newTodo, ...todos]);
-      }
+    } catch (err) {
+      console.error('Failed to add todo:', err);
     }
   };
 
@@ -243,23 +178,16 @@ export default function App() {
     try {
       await saveTodoToFirestore({ id, completed });
       setTodos(todos.map(t => t.id === id ? { ...t, completed } : t));
-    } catch {
-      const res = await fetch(`/api/todos/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ completed })
-      });
-      if (res.ok) {
-        setTodos(todos.map(t => t.id === id ? { ...t, completed } : t));
-      }
+    } catch (err) {
+      console.error('Failed to toggle todo:', err);
     }
   };
 
   const handleDeleteTodo = async (id: string) => {
     try {
       await deleteTodoFromFirestore(id);
-    } catch {
-      await fetch(`/api/todos/${id}`, { method: 'DELETE' });
+    } catch (err) {
+      console.error('Failed to delete todo:', err);
     }
     setTodos(todos.filter(t => t.id !== id));
   };
@@ -269,16 +197,8 @@ export default function App() {
     try {
       const newNote = await saveNoteToFirestore(noteData);
       setNotes([newNote, ...notes]);
-    } catch {
-      const res = await fetch('/api/notes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(noteData)
-      });
-      if (res.ok) {
-        const newNote = await res.json();
-        setNotes([newNote, ...notes]);
-      }
+    } catch (err) {
+      console.error('Failed to add note:', err);
     }
   };
 
@@ -286,23 +206,16 @@ export default function App() {
     try {
       await saveNoteToFirestore({ id, isPinned });
       setNotes(notes.map(n => n.id === id ? { ...n, isPinned } : n));
-    } catch {
-      const res = await fetch(`/api/notes/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isPinned })
-      });
-      if (res.ok) {
-        setNotes(notes.map(n => n.id === id ? { ...n, isPinned } : n));
-      }
+    } catch (err) {
+      console.error('Failed to pin note:', err);
     }
   };
 
   const handleDeleteNote = async (id: string) => {
     try {
       await deleteNoteFromFirestore(id);
-    } catch {
-      await fetch(`/api/notes/${id}`, { method: 'DELETE' });
+    } catch (err) {
+      console.error('Failed to delete note:', err);
     }
     setNotes(notes.filter(n => n.id !== id));
   };

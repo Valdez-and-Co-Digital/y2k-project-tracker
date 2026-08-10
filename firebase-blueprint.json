@@ -1,0 +1,83 @@
+{
+  "entities": {
+    "Project": {
+      "title": "Project",
+      "description": "User project definition",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string", "maxLength": 100 },
+        "client": { "type": "string", "maxLength": 100 },
+        "hourlyRate": { "type": "number" },
+        "targetHours": { "type": "number" },
+        "targetPoints": { "type": "number" },
+        "color": { "type": "string" },
+        "userId": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "name", "userId"]
+    },
+    "TimeLog": {
+      "title": "TimeLog",
+      "description": "Logged work session",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "projectId": { "type": "string" },
+        "durationMinutes": { "type": "number" },
+        "description": { "type": "string", "maxLength": 500 },
+        "points": { "type": "number" },
+        "date": { "type": "string" },
+        "userId": { "type": "string" }
+      },
+      "required": ["id", "projectId", "userId"]
+    },
+    "Todo": {
+      "title": "Todo",
+      "description": "Project task item",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "text": { "type": "string", "maxLength": 200 },
+        "completed": { "type": "boolean" },
+        "priority": { "type": "string" },
+        "deadline": { "type": "string" },
+        "projectId": { "type": "string" },
+        "userId": { "type": "string" }
+      },
+      "required": ["id", "text", "userId"]
+    },
+    "Note": {
+      "title": "Note",
+      "description": "Project note or Keep note",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string", "maxLength": 150 },
+        "content": { "type": "string", "maxLength": 5000 },
+        "projectId": { "type": "string" },
+        "userId": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "title", "userId"]
+    }
+  },
+  "firestore": {
+    "/projects/{projectId}": {
+      "schema": { "$ref": "#/entities/Project" },
+      "description": "User projects"
+    },
+    "/timeLogs/{logId}": {
+      "schema": { "$ref": "#/entities/TimeLog" },
+      "description": "User time logs"
+    },
+    "/todos/{todoId}": {
+      "schema": { "$ref": "#/entities/Todo" },
+      "description": "User todos"
+    },
+    "/notes/{noteId}": {
+      "schema": { "$ref": "#/entities/Note" },
+      "description": "User notes"
+    }
+  }
+}

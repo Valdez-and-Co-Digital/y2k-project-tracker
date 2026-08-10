@@ -15,8 +15,8 @@ const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0
 export const db = getFirestore(app, (firebaseConfig as any).firestoreDatabaseId);
 export const auth = getAuth(app);
 
-// In-memory token cache (never stored in localStorage)
-let cachedAccessToken: string | null = null;
+// Local storage token cache to persist across refreshes
+let cachedAccessToken: string | null = localStorage.getItem('google_access_token');
 let isSigningIn = false;
 
 // Configured Google Auth Provider with Google Workspace Scopes
@@ -57,6 +57,7 @@ export const signInWithGoogle = async (): Promise<{ user: User; accessToken: str
       throw new Error('Failed to obtain Google access token from sign-in.');
     }
     cachedAccessToken = credential.accessToken;
+    localStorage.setItem('google_access_token', cachedAccessToken);
     return { user: result.user, accessToken: cachedAccessToken };
   } catch (error: any) {
     console.error('Google Sign-In Error details:', {
@@ -77,11 +78,17 @@ export const getAccessToken = (): string | null => {
 
 export const setAccessToken = (token: string | null) => {
   cachedAccessToken = token;
+  if (token) {
+    localStorage.setItem('google_access_token', token);
+  } else {
+    localStorage.removeItem('google_access_token');
+  }
 };
 
 export const logoutUser = async () => {
   await signOut(auth);
   cachedAccessToken = null;
+  localStorage.removeItem('google_access_token');
 };
 
 // Firestore Error Handler helper as mandated by firebase skill

@@ -70,13 +70,19 @@ export const BossReportModal: React.FC<BossReportModalProps> = ({
   const handleDownloadCSV = () => {
     soundFx.playCoin();
     let csvContent = 'data:text/csv;charset=utf-8,';
-    csvContent += 'Date,Project,Task Name,Description,Duration (Mins),Working Points,Backdated\n';
+    csvContent += 'Date,Project,Task Name,Description,Duration,Working Points,Backdated\n';
 
     filteredLogs.forEach((l) => {
       const projName = projects.find((p) => p.id === l.projectId)?.name || 'General';
       const cleanTask = `"${l.taskName.replace(/"/g, '""')}"`;
       const cleanDesc = `"${l.description.replace(/"/g, '""')}"`;
-      csvContent += `${l.date.split('T')[0]},${projName},${cleanTask},${cleanDesc},${l.durationMinutes},${l.workingPoints},${l.backdated ? 'Yes' : 'No'}\n`;
+      
+      let durationFormat = `${l.durationMinutes} Mins`;
+      if (l.durationMinutes >= 30) {
+        durationFormat = `${Number((l.durationMinutes / 60).toFixed(2))} Hrs`;
+      }
+
+      csvContent += `${l.date.split('T')[0]},${projName},${cleanTask},${cleanDesc},${durationFormat},${l.workingPoints},${l.backdated ? 'Yes' : 'No'}\n`;
     });
 
     const encodedUri = encodeURI(csvContent);

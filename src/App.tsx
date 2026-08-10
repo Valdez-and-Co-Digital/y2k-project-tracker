@@ -108,7 +108,6 @@ export default function App() {
   };
 
   useEffect(() => {
-    fetchData();
     const unsubscribe = initAuth((u) => {
       setUser(u);
     });
@@ -116,6 +115,10 @@ export default function App() {
       if (unsubscribe) unsubscribe();
     };
   }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [user?.uid]);
 
   // Handlers for Project
   const handleSaveProject = async (projectData: Partial<Project>) => {

@@ -27,7 +27,8 @@ googleProvider.addScope('https://www.googleapis.com/auth/gmail.send');
 googleProvider.addScope('https://www.googleapis.com/auth/gmail.compose');
 googleProvider.addScope('https://www.googleapis.com/auth/spreadsheets');
 googleProvider.addScope('https://www.googleapis.com/auth/contacts.readonly');
-googleProvider.addScope('https://www.googleapis.com/auth/drive.file');
+googleProvider.addScope('https://www.googleapis.com/auth/calendar.readonly');
+googleProvider.addScope('https://www.googleapis.com/auth/drive.readonly');
 
 export const initAuth = (
   onAuthSuccess?: (user: User, token: string) => void,

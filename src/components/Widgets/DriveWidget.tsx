@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { DriveFile, Project } from '../../types';
 import { soundFx } from '../../lib/soundFx';
 import { Folder, RefreshCw, ExternalLink, FileText, Plus, FileSpreadsheet } from 'lucide-react';
+import { getAccessToken } from '../../lib/firebase';
+import { listDriveFiles } from '../../lib/googleWorkspace';
 
 interface DriveWidgetProps {
   project: Project;
@@ -16,12 +18,14 @@ export const DriveWidget: React.FC<DriveWidgetProps> = ({ project, onAttachDrive
   const fetchDrive = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/google/drive');
-      if (res.ok) {
-        const data = await res.json();
-        setFiles(data.files || []);
-        setSource(data.source || '');
+      const token = getAccessToken();
+      if (!token) {
+        setSource('unauthenticated');
+        return;
       }
+      const filesList = await listDriveFiles(token);
+      setFiles(filesList);
+      setSource('google');
     } catch (err) {
       console.error('Error fetching drive files:', err);
     } finally {
@@ -52,7 +56,7 @@ export const DriveWidget: React.FC<DriveWidgetProps> = ({ project, onAttachDrive
         </div>
         <div className="flex items-center gap-1.5">
           <span className="text-xs font-black bg-black text-white px-3 py-1 rounded-full uppercase">
-            {source === 'google' ? '🟢 LIVE DRIVE' : '⚡ DEMO DRIVE'}
+            {source === 'google' ? '🟢 LIVE DRIVE' : source === 'unauthenticated' ? '🔒 SIGN IN REQ' : '⚡ DRIVE'}
           </span>
           <button
             onClick={() => {

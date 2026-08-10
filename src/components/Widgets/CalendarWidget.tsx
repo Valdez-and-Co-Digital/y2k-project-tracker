@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { CalendarEvent, Project } from '../../types';
 import { soundFx } from '../../lib/soundFx';
 import { Calendar, RefreshCw, ExternalLink, Clock, Plus, CheckCircle2 } from 'lucide-react';
+import { getAccessToken } from '../../lib/firebase';
+import { listCalendarEvents } from '../../lib/googleWorkspace';
 
 interface CalendarWidgetProps {
   project: Project;
@@ -21,12 +23,14 @@ export const CalendarWidget: React.FC<CalendarWidgetProps> = ({
   const fetchCalendar = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/google/calendar');
-      if (res.ok) {
-        const data = await res.json();
-        setEvents(data.items || []);
-        setSource(data.source || '');
+      const token = getAccessToken();
+      if (!token) {
+        setSource('unauthenticated');
+        return;
       }
+      const eventsList = await listCalendarEvents(token);
+      setEvents(eventsList);
+      setSource('google');
     } catch (err) {
       console.error('Error fetching calendar:', err);
     } finally {
@@ -50,7 +54,7 @@ export const CalendarWidget: React.FC<CalendarWidgetProps> = ({
         </div>
         <div className="flex items-center gap-1.5">
           <span className="text-xs font-black bg-black text-white px-3 py-1 rounded-full uppercase">
-            {source === 'google' ? '🟢 LIVE GOOGLE' : '⚡ DEMO CALENDAR'}
+            {source === 'google' ? '🟢 LIVE GOOGLE' : source === 'unauthenticated' ? '🔒 SIGN IN REQ' : '⚡ CALENDAR'}
           </span>
           <button
             onClick={() => {
@@ -107,9 +111,9 @@ export const CalendarWidget: React.FC<CalendarWidgetProps> = ({
                   </p>
                 )}
 
-                <div className="flex items-center justify-between pt-1 border-t border-black/10 text-xs font-bold">
+                <div className="flex items-center justify-between pt-1 border-t border-black/10 text-xs font-bold mt-2">
                   <span className="text-zinc-600 truncate max-w-[150px]">
-                    📍 {evt.location || 'Online Meet'}
+                    📍 {evt.location || (evt.htmlLink && evt.htmlLink.includes('meet') ? 'Google Meet' : 'Online')}
                   </span>
 
                   <div className="flex items-center gap-1.5">

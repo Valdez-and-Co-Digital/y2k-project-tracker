@@ -224,3 +224,40 @@ export async function listGoogleContacts(accessToken: string): Promise<GoogleCon
     };
   });
 }
+
+// 5. GOOGLE CALENDAR API
+export async function listCalendarEvents(accessToken: string): Promise<any[]> {
+  const timeMin = new Date().toISOString();
+  const response = await fetch(
+    `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${timeMin}&maxResults=10&singleEvents=true&orderBy=startTime`,
+    {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }
+  );
+
+  if (!response.ok) {
+    const errText = await response.text();
+    throw new Error(`Google Calendar Error (${response.status}): ${errText}`);
+  }
+
+  const data = await response.json();
+  return data.items || [];
+}
+
+// 6. GOOGLE DRIVE API
+export async function listDriveFiles(accessToken: string): Promise<any[]> {
+  const response = await fetch(
+    `https://www.googleapis.com/drive/v3/files?pageSize=10&fields=files(id,name,mimeType,webViewLink,modifiedTime)&orderBy=modifiedTime desc`,
+    {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }
+  );
+
+  if (!response.ok) {
+    const errText = await response.text();
+    throw new Error(`Google Drive Error (${response.status}): ${errText}`);
+  }
+
+  const data = await response.json();
+  return data.files || [];
+}

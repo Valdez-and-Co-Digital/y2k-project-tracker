@@ -57,8 +57,13 @@ export const signInWithGoogle = async (): Promise<{ user: User; accessToken: str
     }
     cachedAccessToken = credential.accessToken;
     return { user: result.user, accessToken: cachedAccessToken };
-  } catch (error) {
-    console.error('Google Sign-In Error:', error);
+  } catch (error: any) {
+    console.error('Google Sign-In Error details:', {
+      code: error?.code,
+      message: error?.message,
+      customData: error?.customData,
+      email: error?.customData?.email
+    });
     throw error;
   } finally {
     isSigningIn = false;

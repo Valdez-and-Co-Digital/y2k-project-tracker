@@ -2,7 +2,8 @@
   "auth": {
     "authorizedDomains": [
       "localhost",
-      "y2k-tracker-cdd71.firebaseapp.com"
+      "y2k-tracker-cdd71.firebaseapp.com",
+      "vercel.app"
     ],
     "providers": {
       "googleSignIn": {

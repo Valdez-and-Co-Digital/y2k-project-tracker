@@ -41,9 +41,29 @@ import {
   Trash2, 
   Edit, 
   Plus, 
-  Search
+  Search,
+  Upload
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
+
+function parseCSV(str: string): string[][] {
+  const arr: string[][] = [];
+  let quote = false;
+  let row = 0, col = 0;
+  for (let c = 0; c < str.length; c++) {
+    let cc = str[c], nc = str[c+1];
+    arr[row] = arr[row] || [];
+    arr[row][col] = arr[row][col] || '';
+    if (cc == '"' && quote && nc == '"') { arr[row][col] += cc; ++c; continue; }
+    if (cc == '"') { quote = !quote; continue; }
+    if (cc == ',' && !quote) { ++col; continue; }
+    if (cc == '\r' && nc == '\n' && !quote) { ++row; col = 0; ++c; continue; }
+    if (cc == '\n' && !quote) { ++row; col = 0; continue; }
+    if (cc == '\r' && !quote) { ++row; col = 0; continue; }
+    arr[row][col] += cc;
+  }
+  return arr;
+}
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -178,6 +198,84 @@ export default function App() {
       console.error('Failed to delete log:', err);
     }
     setLogs(logs.filter(l => l.id !== id));
+  };
+
+  const handleImportCSV = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const text = event.target?.result as string;
+      if (!text) return;
+      
+      const rows = parseCSV(text);
+      if (rows.length < 2) return;
+      
+      const newLogs: TimeLog[] = [];
+      let currentProjects = [...projects];
+
+      for (let i = 1; i < rows.length; i++) {
+        const r = rows[i];
+        if (r.length < 5) continue;
+        
+        const dateStr = r[0] || new Date().toISOString();
+        const projName = r[1]?.trim();
+        const taskName = r[2]?.trim();
+        const desc = r[3]?.trim();
+        const durationStr = r[4]?.trim() || '0';
+        const pointsStr = r[5]?.trim() || '0';
+        const backdatedStr = r[6]?.trim() || 'No';
+
+        let durationMins = 0;
+        if (durationStr.toLowerCase().includes('hr')) {
+          durationMins = parseFloat(durationStr) * 60;
+        } else if (durationStr.toLowerCase().includes('min')) {
+          durationMins = parseFloat(durationStr);
+        } else {
+          durationMins = parseFloat(durationStr) * 60;
+        }
+        if (isNaN(durationMins)) durationMins = 60;
+
+        let projectId = '';
+        if (projName) {
+          let foundProj = currentProjects.find(p => p.name.toLowerCase() === projName.toLowerCase());
+          if (!foundProj) {
+            foundProj = await saveProjectToFirestore({
+              name: projName,
+              description: 'Imported from CSV',
+              targetHours: 40,
+              targetPoints: 100,
+              hourlyRate: 85,
+              color: 'cyan'
+            });
+            currentProjects.push(foundProj);
+            setProjects([...currentProjects]);
+          }
+          projectId = foundProj.id;
+        }
+
+        const dateObj = new Date(dateStr);
+        
+        const logData: Partial<TimeLog> = {
+          projectId,
+          taskName: taskName || 'Imported Task',
+          description: desc || '',
+          durationMinutes: Math.round(durationMins),
+          workingPoints: parseInt(pointsStr) || 0,
+          date: isNaN(dateObj.getTime()) ? new Date().toISOString() : dateObj.toISOString(),
+          backdated: backdatedStr.toLowerCase() === 'yes' || backdatedStr.toLowerCase() === 'true'
+        };
+
+        const newLog = await saveLogToFirestore(logData);
+        newLogs.push(newLog);
+      }
+      
+      setLogs((prev) => [...newLogs, ...prev].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+      soundFx.playSuccess();
+      e.target.value = '';
+    };
+    reader.readAsText(file);
   };
 
   // Handlers for To-Dos
@@ -442,16 +540,33 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Search input */}
-              <div className="relative">
-                <Search className="w-4 h-4 text-zinc-500 absolute left-3 top-3" />
-                <input
-                  type="text"
-                  placeholder="Filter logs..."
-                  value={logSearch}
-                  onChange={(e) => setLogSearch(e.target.value)}
-                  className="bg-[#F1F2F6] text-black font-bold text-xs pl-9 pr-4 py-2.5 rounded-xl border-2 border-black focus:outline-none focus:bg-white"
+              {/* Actions & Search */}
+              <div className="flex items-center gap-3">
+                <input 
+                  type="file" 
+                  accept=".csv" 
+                  onChange={handleImportCSV} 
+                  className="hidden" 
+                  id="csv-upload" 
                 />
+                <label 
+                  htmlFor="csv-upload"
+                  className="bg-retro-teal text-on-surface font-label-pixel text-[10px] uppercase border-2 border-black rounded-lg py-2 px-3 shadow-[2px_2px_0px_rgba(0,0,0,1)] hover:brightness-110 flex items-center gap-2 btn-press cursor-pointer"
+                >
+                  <Upload className="w-4 h-4" />
+                  Import CSV
+                </label>
+
+                <div className="relative">
+                  <Search className="w-4 h-4 text-zinc-500 absolute left-3 top-3" />
+                  <input
+                    type="text"
+                    placeholder="Filter logs..."
+                    value={logSearch}
+                    onChange={(e) => setLogSearch(e.target.value)}
+                    className="bg-[#F1F2F6] text-black font-bold text-xs pl-9 pr-4 py-2.5 rounded-xl border-2 border-black focus:outline-none focus:bg-white w-[160px] sm:w-[200px]"
+                  />
+                </div>
               </div>
             </div>
 

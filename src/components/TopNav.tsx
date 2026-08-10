@@ -1,82 +1,142 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Project } from '../types';
-import { Menu, Palette, Pets, ExpandMore, VolumeUp, Tv } from '@mui/icons-material';
 
 interface TopNavProps {
   activeProject: Project | null;
+  projects: Project[];
+  onSelectProject: (project: Project | null) => void;
   soundEnabled: boolean;
   onToggleSound: () => void;
   crtEnabled: boolean;
   onToggleCrt: () => void;
+  onToggleMobileNav: () => void;
 }
 
-export function TopNav({
+export const TopNav: React.FC<TopNavProps> = ({
   activeProject,
+  projects,
+  onSelectProject,
   soundEnabled,
   onToggleSound,
   crtEnabled,
-  onToggleCrt
-}: TopNavProps) {
-  return (
-    <header className="sticky top-0 z-30 flex items-center justify-between px-gutter py-4 bg-surface-container-lowest border-b-3 border-on-surface">
-      {/* Mobile Menu Button (Hidden on Desktop) */}
-      <button className="md:hidden p-2 rounded-lg border-3 border-on-surface bg-surface hover:bg-surface-container-high">
-        <span className="material-symbols-outlined">menu</span>
-      </button>
+  onToggleCrt,
+  onToggleMobileNav,
+}) => {
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
-      {/* Marquee/Top Links (Desktop) */}
-      <div className="hidden md:flex items-center gap-4">
-        <div className="flex items-center gap-2 bg-surface-container-high rounded-full px-4 py-1 border-3 border-on-surface shadow-hard">
-          <span className="material-symbols-outlined text-sm">palette</span>
-          <span className="font-label-pixel text-label-pixel">Theme: Lime</span>
-        </div>
-        <div className="flex items-center gap-2 bg-tertiary-container rounded-full px-4 py-1 border-3 border-on-surface shadow-hard">
-          <span className="material-symbols-outlined text-sm">pets</span>
-          <span className="font-label-pixel text-label-pixel">Tamagotchi</span>
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleSelect = (project: Project | null) => {
+    onSelectProject(project);
+    setIsDropdownOpen(false);
+  };
+
+  return (
+    <header className="sticky top-0 z-30 flex items-center justify-between px-4 py-4 bg-surface-container-lowest border-b-3 border-on-surface">
+      <div className="flex items-center gap-4">
+        {/* Mobile Nav Toggle */}
+        <button 
+          className="md:hidden p-2 border-2 border-on-surface hover:bg-surface-variant flex items-center justify-center"
+          onClick={onToggleMobileNav}
+        >
+          <span className="material-symbols-outlined">menu</span>
+        </button>
+
+        {/* Project Selector Dropdown */}
+        <div className="relative" ref={dropdownRef}>
+          <button 
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            className="flex items-center gap-2 px-4 py-2 bg-surface border-2 border-on-surface hover:bg-surface-variant font-bold shadow-[2px_2px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-[2px] transition-all"
+          >
+            <span className="material-symbols-outlined text-primary">folder</span>
+            <span className="truncate max-w-[150px] sm:max-w-[200px]">
+              {activeProject ? activeProject.name : 'Workspace Overview'}
+            </span>
+            <span className="material-symbols-outlined">arrow_drop_down</span>
+          </button>
+
+          {isDropdownOpen && (
+            <div className="absolute top-full left-0 mt-2 w-64 bg-surface border-3 border-on-surface shadow-hard z-50">
+              <button
+                onClick={() => handleSelect(null)}
+                className={`w-full text-left px-4 py-3 hover:bg-primary-container hover:text-on-primary-container border-b-2 border-on-surface flex items-center gap-3 ${
+                  !activeProject ? 'bg-primary-container text-on-primary-container font-bold' : ''
+                }`}
+              >
+                <span className="material-symbols-outlined">grid_view</span>
+                Workspace Overview
+              </button>
+              <div className="max-h-60 overflow-y-auto">
+                {projects.map((project) => (
+                  <button
+                    key={project.id}
+                    onClick={() => handleSelect(project)}
+                    className={`w-full text-left px-4 py-3 hover:bg-surface-variant border-b border-outline-variant flex items-center gap-3 ${
+                      activeProject?.id === project.id ? 'font-bold bg-surface-variant' : ''
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-primary">folder</span>
+                    <span className="truncate">{project.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Trailing Actions */}
       <div className="flex items-center gap-4">
-        <div className="relative">
-          <button className="flex items-center gap-2 px-4 py-2 bg-surface rounded-xl border-3 border-on-surface hover:bg-surface-container-high transition-all shadow-hard btn-press">
-            <span className="material-symbols-outlined">folder</span>
-            <span className="font-label-pixel text-label-pixel uppercase truncate max-w-[120px] md:max-w-none">
-              {activeProject ? activeProject.name : 'Workspace Overview'}
-            </span>
-            <span className="material-symbols-outlined">expand_more</span>
-          </button>
+        {/* Desktop Pills */}
+        <div className="hidden md:flex items-center gap-3 mr-4">
+          <div className="px-3 py-1 bg-lime-300 text-black border-2 border-black font-mono text-xs uppercase flex items-center gap-1 shadow-[2px_2px_0px_rgba(0,0,0,1)]">
+            <span className="material-symbols-outlined text-sm">palette</span>
+            Theme: Lime
+          </div>
+          <div className="px-3 py-1 bg-pink-300 text-black border-2 border-black font-mono text-xs uppercase flex items-center gap-1 shadow-[2px_2px_0px_rgba(0,0,0,1)]">
+            <span className="material-symbols-outlined text-sm">pets</span>
+            Lvl 12
+          </div>
         </div>
 
+        {/* Toggles */}
         <div className="flex gap-2">
           <button 
             onClick={onToggleSound}
-            className={`w-10 h-10 rounded-xl border-3 border-on-surface flex items-center justify-center hover:brightness-110 shadow-hard btn-press ${
-              soundEnabled ? 'bg-retro-yellow' : 'bg-surface'
+            className={`p-2 border-2 border-on-surface flex items-center justify-center transition-colors ${
+              soundEnabled ? 'bg-primary text-on-primary' : 'bg-surface hover:bg-surface-variant'
             }`}
+            title="Toggle Sound"
           >
             <span className="material-symbols-outlined">
               {soundEnabled ? 'volume_up' : 'volume_off'}
             </span>
           </button>
+          
           <button 
             onClick={onToggleCrt}
-            className={`w-10 h-10 rounded-xl border-3 border-on-surface flex items-center justify-center hover:brightness-110 shadow-hard btn-press ${
-              crtEnabled ? 'bg-retro-teal' : 'bg-surface'
+            className={`p-2 border-2 border-on-surface flex items-center justify-center transition-colors ${
+              crtEnabled ? 'bg-retro-teal text-black' : 'bg-surface hover:bg-surface-variant'
             }`}
+            title="Toggle CRT Effect"
           >
             <span className="material-symbols-outlined">tv</span>
           </button>
         </div>
 
-        <div className="w-10 h-10 rounded-full border-3 border-on-surface overflow-hidden bg-primary-container shrink-0">
-          <img 
-            className="w-full h-full object-cover" 
-            alt="User avatar" 
-            src="https://api.dicebear.com/7.x/pixel-art/svg?seed=Morgan"
-          />
+        {/* User Avatar */}
+        <div className="w-10 h-10 bg-primary-container border-2 border-on-surface rounded-full flex items-center justify-center overflow-hidden">
+          <span className="material-symbols-outlined text-on-primary-container">person</span>
         </div>
       </div>
     </header>
   );
-}
+};

@@ -203,6 +203,7 @@ export const CustomizableDashboard: React.FC<CustomizableDashboardProps> = ({
   };
 
   return (
+    <>
       {/* Dashboard Top Controls Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-surface p-6 rounded-2xl border-3 border-on-surface shadow-hard no-print relative overflow-hidden">
         <div className="absolute inset-0 bg-pixel-pattern-light opacity-50 rounded-2xl pointer-events-none"></div>
@@ -303,6 +304,6 @@ export const CustomizableDashboard: React.FC<CustomizableDashboardProps> = ({
           </div>
         ))}
       </div>
-    </div>
+    </>
   );
 };

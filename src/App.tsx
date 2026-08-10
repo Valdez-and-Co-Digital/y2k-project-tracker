@@ -18,28 +18,16 @@ import { AIChatbotDrawer } from './components/AIChatbotDrawer';
 import { PixelProgressBar } from './components/PixelProgressBar';
 import { SideNav } from './components/SideNav';
 import { TopNav } from './components/TopNav';
+import { BottomNav } from './components/BottomNav';
 import { TodosWidget } from './components/Widgets/TodosWidget';
 import { NotesWidget } from './components/Widgets/NotesWidget';
 import { CalendarWidget } from './components/Widgets/CalendarWidget';
 import { DriveWidget } from './components/Widgets/DriveWidget';
 import { 
-  Gamepad2, 
-  Clock, 
-  CheckSquare, 
-  StickyNote, 
-  Calendar, 
-  Folder, 
   Trash2, 
   Edit, 
   Plus, 
-  FileText, 
-  Zap, 
-  Sparkles,
-  ExternalLink,
-  Search,
-  CheckCircle2,
-  Tv,
-  HelpCircle
+  Search
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -61,6 +49,7 @@ export default function App() {
   const [projectToEdit, setProjectToEdit] = useState<Project | null>(null);
   const [showBossReportModal, setShowBossReportModal] = useState(false);
   const [showChatbotDrawer, setShowChatbotDrawer] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   // Search filter for logs table
   const [logSearch, setLogSearch] = useState('');
@@ -253,7 +242,7 @@ export default function App() {
   }[theme];
 
   return (
-    <div className={`font-body-md text-body-md text-on-surface antialiased min-h-screen flex ${crtEnabled ? 'crt-overlay' : ''}`}>
+    <div className={`font-body-md text-body-md text-on-surface antialiased min-h-screen flex flex-col md:flex-row ${crtEnabled ? 'crt-overlay' : ''}`}>
       <PixelGridBackground />
 
       {/* Side Nav */}
@@ -266,12 +255,17 @@ export default function App() {
         }}
         onOpenBossReport={() => setShowBossReportModal(true)}
         onOpenChatbot={() => setShowChatbotDrawer(true)}
+        isOpen={mobileNavOpen}
+        onClose={() => setMobileNavOpen(false)}
       />
 
       {/* Main Body Content */}
-      <main className="flex-1 ml-0 md:ml-72 min-h-screen flex flex-col relative z-10">
+      <main className="flex-1 ml-0 md:ml-72 min-h-screen flex flex-col relative z-10 pb-20 md:pb-0">
         <TopNav
           activeProject={activeProject}
+          projects={projects}
+          onSelectProject={setActiveProject}
+          onToggleMobileNav={() => setMobileNavOpen(true)}
           soundEnabled={soundEnabled}
           onToggleSound={() => {
             soundFx.enabled = !soundEnabled;
@@ -285,8 +279,8 @@ export default function App() {
 
         
         {/* Project Scope Banner */}
-        {activeProject ? (
-          <div className="bg-white border-[4px] border-black rounded-[24px] p-4 md:p-5 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col md:flex-row md:items-center justify-between gap-4 no-print relative overflow-hidden">
+        {activeProject && (
+          <div className="bg-surface border-3 border-on-surface rounded-2xl p-4 md:p-5 shadow-hard-xl flex flex-col md:flex-row md:items-center justify-between gap-4 no-print relative overflow-hidden">
             {/* Background Pixel Sparkles */}
             <PixelSparkle size={18} color="#CCFF00" className="absolute top-2 right-4 pointer-events-none opacity-80" />
             <PixelSparkle size={14} color="#A29BFE" className="absolute bottom-2 left-4 pointer-events-none opacity-80" />
@@ -295,7 +289,7 @@ export default function App() {
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-1.5">
                   <PixelGameBoy size={28} />
-                  <h2 className="font-black text-xl md:text-2xl text-black italic uppercase tracking-tight">
+                  <h2 className="font-black text-xl md:text-2xl text-on-surface italic uppercase tracking-tight">
                     {activeProject.name}
                   </h2>
                 </div>
@@ -305,13 +299,13 @@ export default function App() {
                     setProjectToEdit(activeProject);
                     setShowProjectModal(true);
                   }}
-                  className="p-1.5 text-zinc-600 hover:text-black bg-[#F1F2F6] hover:bg-[#FFE66D] border-2 border-black rounded-lg transition-colors cursor-pointer"
+                  className="p-1.5 text-on-surface-variant hover:text-on-surface bg-surface-container-high hover:bg-secondary-container border-3 border-on-surface rounded-lg transition-colors cursor-pointer"
                   title="Edit Project Settings"
                 >
                   <Edit className="w-4 h-4" />
                 </button>
               </div>
-              <p className="text-xs text-zinc-700 max-w-2xl font-bold leading-relaxed">
+              <p className="text-xs text-on-surface-variant font-bold leading-relaxed">
                 {activeProject.description || 'No scope description defined.'}
               </p>
             </div>
@@ -321,39 +315,25 @@ export default function App() {
                 <PixelTamagotchi size={32} />
               </div>
 
-              <div className="bg-[#F1F2F6] border-2 border-black p-2.5 rounded-xl text-center min-w-[90px] shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-                <span className="text-[10px] font-black uppercase text-zinc-500 block">Rate/hr</span>
-                <span className="font-mono text-base text-black font-black">
+              <div className="bg-surface-container-high border-3 border-on-surface p-2.5 rounded-xl text-center min-w-[90px] shadow-hard">
+                <span className="text-[10px] font-black uppercase text-on-surface-variant block">Rate/hr</span>
+                <span className="font-mono text-base text-on-surface font-black">
                   ${activeProject.hourlyRate || 85}
                 </span>
               </div>
-              <div className="bg-[#CCFF00] border-2 border-black p-2.5 rounded-xl text-center min-w-[90px] shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-                <span className="text-[10px] font-black uppercase text-black block">Hours Scope</span>
-                <span className="font-mono text-base text-black font-black">
+              <div className="bg-primary-container border-3 border-on-surface p-2.5 rounded-xl text-center min-w-[90px] shadow-hard">
+                <span className="text-[10px] font-black uppercase text-on-surface block">Hours Scope</span>
+                <span className="font-mono text-base text-on-surface font-black">
                   {activeProject.targetHours}h
                 </span>
               </div>
-              <div className="bg-[#A29BFE] border-2 border-black p-2.5 rounded-xl text-center min-w-[90px] shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-                <span className="text-[10px] font-black uppercase text-black block">Points Scope</span>
-                <span className="font-mono text-base text-black font-black">
+              <div className="bg-tertiary-fixed-dim border-3 border-on-surface p-2.5 rounded-xl text-center min-w-[90px] shadow-hard">
+                <span className="text-[10px] font-black uppercase text-on-surface block">Points Scope</span>
+                <span className="font-mono text-base text-on-surface font-black">
                   {activeProject.targetPoints}
                 </span>
               </div>
             </div>
-          </div>
-        ) : (
-          <div className="bg-white border-[4px] border-black rounded-[24px] p-5 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] text-center relative overflow-hidden flex flex-col items-center justify-center gap-2">
-            <div className="flex items-center gap-3">
-              <PixelGameBoy size={32} />
-              <PixelTamagotchi size={32} />
-              <PixelHeartWinged size={28} />
-            </div>
-            <h2 className="font-black text-lg text-black uppercase italic tracking-tight">
-              🌟 All Projects Y2K Pixel Workspace
-            </h2>
-            <p className="text-xs text-zinc-700 font-bold max-w-xl">
-              Select a project from the top dropdown or create a new one to unlock deadlined to-dos, backdate time logs, and custom drag & drop pixel widgets!
-            </p>
           </div>
         )}
 
@@ -378,22 +358,60 @@ export default function App() {
 
         {/* Fallback if Dashboard active tab but no active project */}
         {activeTab === 'dashboard' && !activeProject && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {projects.map(p => (
-              <div key={p.id} className="bg-white border-[4px] border-black rounded-[24px] p-5 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] space-y-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-black text-lg text-black italic uppercase">{p.name}</h3>
-                  <button
-                    onClick={() => setActiveProject(p)}
-                    className="bg-[#4ECDC4] text-black font-black text-xs px-4 py-2 rounded-xl border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 cursor-pointer uppercase"
-                  >
-                    Open Dashboard 🚀
-                  </button>
-                </div>
-                <p className="text-xs text-zinc-600 font-bold">{p.description}</p>
+          <>
+            {/* Header Banner */}
+            <div className="bg-surface rounded-2xl border-3 border-on-surface p-8 shadow-hard-xl flex flex-col items-center justify-center text-center relative overflow-hidden">
+              <div className="absolute top-4 left-4 flex gap-2">
+                <span className="material-symbols-outlined text-tertiary text-2xl">sports_esports</span>
+                <span className="material-symbols-outlined text-retro-pink text-2xl">favorite</span>
               </div>
-            ))}
-          </div>
+              <h2 className="font-headline-lg text-headline-lg font-black uppercase mb-2 flex items-center gap-3">
+                <span className="material-symbols-outlined text-retro-yellow text-4xl">star</span>
+                ALL PROJECTS Y2K PIXEL WORKSPACE
+              </h2>
+              <p className="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">
+                Select a project from the top dropdown or create a new one to unlock deadlined to-dos, backdate time logs, and custom drag & drop pixel widgets!
+              </p>
+            </div>
+
+            {/* Projects Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {projects.map(project => {
+                const totalLogs = logs.filter(l => l.projectId === project.id);
+                const totalHours = totalLogs.reduce((acc, log) => acc + (log.durationMinutes / 60), 0);
+                const percentage = project.targetHours > 0 ? Math.min(100, Math.round((totalHours / project.targetHours) * 100)) : 0;
+                
+                return (
+                  <div key={project.id} className="bg-retro-yellow/20 rounded-2xl border-3 border-on-surface p-6 shadow-hard hover:-translate-y-1 transition-transform relative group">
+                    <div className="absolute inset-0 bg-pixel-pattern-light opacity-50 rounded-2xl pointer-events-none"></div>
+                    <div className="relative z-10">
+                      <div className="flex justify-between items-start mb-4">
+                        <h3 className="font-headline-md text-headline-md font-bold uppercase">{project.name}</h3>
+                        <button 
+                          onClick={() => setActiveProject(project)}
+                          className="bg-retro-teal text-on-surface font-label-pixel text-label-pixel uppercase border-3 border-on-surface rounded-xl py-2 px-4 shadow-hard hover:brightness-110 flex items-center gap-2 btn-press"
+                        >
+                          OPEN DASHBOARD
+                          <span className="material-symbols-outlined text-sm">rocket_launch</span>
+                        </button>
+                      </div>
+                      <p className="font-body-md text-body-md text-on-surface-variant mb-6">{project.description}</p>
+                      {/* Progress Bar */}
+                      <div className="flex flex-col gap-2">
+                        <div className="flex justify-between font-label-pixel text-label-pixel">
+                          <span>PROGRESS</span>
+                          <span>{percentage}%</span>
+                        </div>
+                        <div className="h-6 w-full border-3 border-on-surface rounded-full bg-surface p-1">
+                          <div className="h-full bg-primary-container rounded-full" style={{ width: `${percentage}%` }}></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
         )}
 
         {/* TAB 2: Full Time Logs Management & Search */}
@@ -577,15 +595,10 @@ export default function App() {
             timeLogs={logs}
           />
         )}
-
+        </div>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t-4 border-black bg-white py-4 text-center text-xs text-black font-black uppercase tracking-wider no-print shadow-[0px_-4px_0px_0px_rgba(0,0,0,1)]">
-        <p>
-          👾 PixelTrack 2000 • Vibrant Y2K Time & Scope Engine • Powered by Google AI Studio
-        </p>
-      </footer>
+      <BottomNav activeTab={activeTab} onChangeTab={setActiveTab} />
 
       {/* Modals */}
       {showProjectModal && (

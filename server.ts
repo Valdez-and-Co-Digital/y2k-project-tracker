@@ -6,7 +6,8 @@ import { GoogleGenAI } from "@google/genai";
 import { Project, TimeLog, TodoItem, NoteItem, CalendarEvent, DriveFile } from "./src/types";
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3005;
+
 
 app.use(express.json());
 

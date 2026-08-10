@@ -1,6 +1,4 @@
 @import "tailwindcss";
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700;900&family=Hanken+Grotesk:wght@400;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
 
 @theme {
   /* Colors */
@@ -65,6 +63,15 @@
   --font-headline-md: 'Space Grotesk', sans-serif;
   --font-body-md: 'Hanken Grotesk', sans-serif;
 
+  /* Font Sizes */
+  --font-size-headline-xl: 40px;
+  --font-size-headline-lg: 32px;
+  --font-size-headline-lg-mobile: 28px;
+  --font-size-headline-md: 24px;
+  --font-size-body-lg: 18px;
+  --font-size-body-md: 16px;
+  --font-size-label-pixel: 12px;
+
   /* Spacing */
   --spacing-card-gap: 16px;
   --spacing-container-padding: 32px;
@@ -88,6 +95,10 @@
     background-color: var(--color-retro-purple); 
     background-image: var(--background-image-pixel-pattern-light); 
     background-size: 24px 24px; 
+  }
+  
+  .material-symbols-outlined {
+    font-variation-settings: 'FILL' 1, 'wght' 700;
   }
 }
 
@@ -113,6 +124,12 @@
       box-shadow: none !important;
   }
 
+  /* Pixel progress bar pattern */
+  .pixel-progress {
+    background-image: linear-gradient(90deg, rgba(0,0,0,0.15) 1px, transparent 1px);
+    background-size: 4px 100%;
+  }
+
   /* Vibrant Custom Scrollbar */
   ::-webkit-scrollbar {
     width: 14px;
@@ -133,13 +150,22 @@
   }
 
   /* Scanline effect optional toggle */
-  .crt-overlay {
+  .crt-overlay::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
     background: linear-gradient(
       rgba(18, 16, 16, 0) 50%, 
       rgba(0, 0, 0, 0.15) 50%
     );
     background-size: 100% 4px;
     pointer-events: none;
+  }
+
+  /* Mobile safe area padding */
+  .pb-safe {
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0.5rem));
   }
 }
 
@@ -152,6 +178,25 @@
   display: flex;
   width: 200%;
   animation: marquee 20s linear infinite;
+}
+
+/* Slide-in drawer animation */
+@keyframes slide-in-left {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-slide-in-left {
+  animation: slide-in-left 0.25s ease-out;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.2s ease-out;
 }
 
 /* Print styles for Boss Report Export */

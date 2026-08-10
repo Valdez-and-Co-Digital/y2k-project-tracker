@@ -615,6 +615,7 @@ export default function App() {
         <ProjectModal
           projectToEdit={projectToEdit}
           onSaveProject={handleSaveProject}
+          onDeleteProject={handleDeleteProject}
           onClose={() => setShowProjectModal(false)}
         />
       )}

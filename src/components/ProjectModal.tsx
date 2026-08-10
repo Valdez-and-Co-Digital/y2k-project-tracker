@@ -6,6 +6,7 @@ import { X, Gamepad2, Zap, Target, DollarSign, Sparkles, FolderPlus } from 'luci
 interface ProjectModalProps {
   projectToEdit?: Project | null;
   onSaveProject: (project: Partial<Project>) => void;
+  onDeleteProject?: (id: string) => void;
   onClose: () => void;
 }
 
@@ -21,6 +22,7 @@ const colors: { id: ProjectColor; label: string; bg: string }[] = [
 export const ProjectModal: React.FC<ProjectModalProps> = ({
   projectToEdit,
   onSaveProject,
+  onDeleteProject,
   onClose
 }) => {
   const [name, setName] = useState(projectToEdit?.name || '');
@@ -165,12 +167,36 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({
             </div>
           </div>
 
-          <button
-            type="submit"
-            className="w-full py-3 bg-pink-500 hover:bg-pink-400 text-white font-pixel text-xs font-bold rounded border-2 border-black pixel-box-pop pixel-btn-press cursor-pointer mt-2"
-          >
-            {projectToEdit ? 'Save Changes' : 'Launch Project 🚀'}
-          </button>
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-3 pt-6 border-t-4 border-black">
+            {projectToEdit && onDeleteProject && (
+              <button
+                type="button"
+                onClick={() => {
+                  onDeleteProject(projectToEdit.id);
+                  onClose();
+                }}
+                className="px-6 py-4 bg-[#FF6B6B] hover:bg-red-500 text-black font-black text-sm uppercase rounded-xl border-4 border-black shadow-[4px_4px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-[4px] active:translate-x-[4px] transition-all flex-1"
+              >
+                Delete Project
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-6 py-4 bg-zinc-200 hover:bg-zinc-300 text-black font-black text-sm uppercase rounded-xl border-4 border-black shadow-[4px_4px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-[4px] active:translate-x-[4px] transition-all flex-1"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={!name.trim()}
+              className="px-6 py-4 bg-[#CCFF00] hover:bg-[#b3e600] text-black font-black text-sm uppercase rounded-xl border-4 border-black shadow-[4px_4px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-[4px] active:translate-x-[4px] transition-all flex-1 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2"
+            >
+              <FolderPlus className="w-5 h-5" />
+              {projectToEdit ? 'Save Changes' : 'Create Project'}
+            </button>
+          </div>
         </form>
       </div>
     </div>
